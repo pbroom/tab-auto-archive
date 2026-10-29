@@ -1,0 +1,16 @@
+{
+  "id": "tab-auto-archive",
+  "name": "Tab Auto-Archive",
+  "description": "Arc-style auto-archiving: idle unpinned tabs close on a timer and land in a searchable archive you can restore from, back into their original space.",
+  "author": "pbroom",
+  "version": "0.1.0",
+  "homepage": "https://github.com/pbroom/tab-auto-archive",
+  "tags": ["tabs", "arc", "productivity"],
+  "scripts": {
+    "tab-auto-archive.uc.js": {
+      "include": ["chrome://browser/content/browser.xhtml"]
+    }
+  },
+  "supportsUnload": true,
+  "preferences": "preferences.json"
+}

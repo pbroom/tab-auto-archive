@@ -1,0 +1,86 @@
+[
+  {
+    "property": "zen.tab-auto-archive.enabled",
+    "label": "Archive idle tabs automatically",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
+    "property": "zen.tab-auto-archive.idle-minutes",
+    "label": "Archive tabs not viewed for",
+    "type": "dropdown",
+    "value": "num",
+    "defaultValue": 720,
+    "options": [
+      {
+        "label": "1 hour",
+        "value": 60
+      },
+      {
+        "label": "6 hours",
+        "value": 360
+      },
+      {
+        "label": "12 hours",
+        "value": 720
+      },
+      {
+        "label": "24 hours",
+        "value": 1440
+      },
+      {
+        "label": "7 days",
+        "value": 10080
+      },
+      {
+        "label": "30 days",
+        "value": 43200
+      }
+    ],
+    "placeholder": false
+  },
+  {
+    "property": "zen.tab-auto-archive.archive-on-close",
+    "label": "Send tabs I close to the archive too",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
+    "property": "zen.tab-auto-archive.retention-days",
+    "label": "Keep archived tabs for",
+    "type": "dropdown",
+    "value": "num",
+    "defaultValue": 30,
+    "options": [
+      {
+        "label": "7 days",
+        "value": 7
+      },
+      {
+        "label": "30 days",
+        "value": 30
+      },
+      {
+        "label": "90 days",
+        "value": 90
+      },
+      {
+        "label": "Forever",
+        "value": 0
+      }
+    ],
+    "placeholder": false
+  },
+  {
+    "property": "zen.tab-auto-archive.skip-grouped-tabs",
+    "label": "Never archive tabs inside folders or groups",
+    "type": "checkbox",
+    "defaultValue": true
+  },
+  {
+    "property": "zen.tab-auto-archive.excluded-domains",
+    "label": "Never archive these sites (comma-separated, e.g. mail.google.com, figma.com)",
+    "type": "string",
+    "defaultValue": ""
+  }
+]
