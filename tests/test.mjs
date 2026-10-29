@@ -246,6 +246,51 @@ test("unrestored (pending) tabs use their session URL", async () => {
   assert.equal(a.store.entries[0].url, "https://pending.test/");
 });
 
+test("history trim keeps the page being viewed after going back", async () => {
+  const win = makeWindow();
+  const a = await boot(win);
+  const { makeEntry } = a._internals;
+  const t = makeTab(win, { url: "https://back.test/" });
+  win.gBrowser.tabContainer.append(t);
+  const urls = Array.from({ length: 15 }, (_, i) => ({ url: `https://back.test/${i + 1}` }));
+  for (const [index, expectStart] of [[2, 1], [8, 1], [12, 3], [15, 6]]) {
+    SessionStore.setTabState(t, { entries: urls, index });
+    const { state } = makeEntry(t, "idle");
+    assert.equal(state.entries.length, 10);
+    assert.equal(state.entries[state.index - 1].url, `https://back.test/${index}`, `index ${index}`);
+    assert.equal(state.entries[0].url, `https://back.test/${expectStart}`, `window start for ${index}`);
+  }
+});
+
+test("only one window writes the archive file", async () => {
+  let writes = 0;
+  const write = IOUtils.writeUTF8;
+  IOUtils.writeUTF8 = async (...args) => { writes++; return write(...args); };
+  try {
+    const w1 = makeWindow();
+    const a = await boot(w1);
+    const w2 = makeWindow();
+    const b = await boot(w2);
+    w2.gBrowser.tabContainer.append(makeTab(w2, { url: "https://w2.test/" }));
+    await b.archiveIdleTabs();
+    w1.gBrowser.tabContainer.append(makeTab(w1, { url: "https://w1.test/" }));
+    await a.archiveIdleTabs();
+    await new Promise(r => setTimeout(r, 1100));
+    await a.store.flush();
+    assert.equal(writes, 1, "one write for both windows' changes");
+    assert.equal(JSON.parse(files.get("/profile/zen-tab-auto-archive.json")).entries.length, 2);
+    // The writer closes; the other window takes over.
+    a.uninit();
+    w1.close();
+    await b.store.remove([b.store.entries[0].id]);
+    await new Promise(r => setTimeout(r, 1100));
+    await b.store.flush();
+    assert.equal(JSON.parse(files.get("/profile/zen-tab-auto-archive.json")).entries.length, 1);
+  } finally {
+    IOUtils.writeUTF8 = write;
+  }
+});
+
 test("idle threshold pref and enabled pref", async () => {
   const win = makeWindow();
   const a = await boot(win);

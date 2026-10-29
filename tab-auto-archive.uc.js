@@ -313,10 +313,14 @@
       for (const key of ["storage", "formdata", "image", "extData"]) {
         delete state[key];
       }
-      if (Array.isArray(state.entries) && state.entries.length > HISTORY_LIMIT) {
-        const drop = state.entries.length - HISTORY_LIMIT;
-        state.entries = state.entries.slice(drop);
-        state.index = Math.max(1, (state.index || 1) - drop);
+      const history = state.entries;
+      if (Array.isArray(history) && history.length > HISTORY_LIMIT) {
+        // Keep a window of history that still holds the page being viewed,
+        // which isn't the last entry after going back.
+        const current = Math.min(Math.max((state.index || history.length) - 1, 0), history.length - 1);
+        const start = Math.min(Math.max(current - HISTORY_LIMIT + 1, 0), history.length - HISTORY_LIMIT);
+        state.entries = history.slice(start, start + HISTORY_LIMIT);
+        state.index = current - start + 1;
       }
     } catch (error) {
       console.warn("[ZenTabAutoArchive] No session state for tab", url, error);
@@ -337,7 +341,7 @@
 
   /**
    * The archive, kept as a full copy in every window. A window that changes it
-   * saves the file and sends the same change to the other windows.
+   * sends the change to the other windows; one window saves the file for all.
    */
   class ArchiveStore {
     entries = [];
@@ -430,11 +434,32 @@
       }
       this.#prune();
       this.#emit();
+      this.#scheduleSave();
     }
 
     #change(change) {
       this.#apply(change);
       Services.obs.notifyObservers(null, STORE_TOPIC, JSON.stringify({ from: this.#windowKey, change }));
+    }
+
+    /**
+     * Whether this window saves the file. Only the first loaded window
+     * writes, so snapshots from two windows can't land out of order.
+     */
+    get #isWriter() {
+      for (const win of Services.wm.getEnumerator("navigator:browser")) {
+        const store = !win.closed && win.ZenTabAutoArchive?.store;
+        if (store?.loaded) {
+          return store === this;
+        }
+      }
+      return true;
+    }
+
+    #scheduleSave() {
+      if (!this.#isWriter) {
+        return;
+      }
       clearTimeout(this.#saveTimer);
       this.#saveTimer = setTimeout(() => this.flush(), 1000);
     }
